@@ -5,3 +5,5 @@ extern crate serde_json;
 
 pub mod board;
 pub mod cpu;
+pub mod config;
+pub mod tournament;

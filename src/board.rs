@@ -50,6 +50,8 @@ impl Debug for Board {
             Player::White => (self.opponent_board, self.player_board),
         };
 
+        let legal = self.make_legal_board();
+
         let dialog = format!("<Turn: {}>\nNext Player: {:?}", self.turn, self.player);
 
         let mut str = " |0|1|2|3|4|5|6|7|\n".to_string();
@@ -62,6 +64,8 @@ impl Debug for Board {
                     '○'
                 } else if (white & 1 << (63 - i * 8 - j)) != 0 {
                     '●'
+                } else if (legal & 1 << (63 - i * 8 - j)) != 0 {
+                    '.'
                 } else {
                     ' '
                 };

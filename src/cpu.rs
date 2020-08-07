@@ -1,4 +1,4 @@
-use crate::board::{Board, Choice, Coordinate, JudgeResult};
+use crate::board::{Board, Choice, Coordinate, JudgeResult, Player};
 use rand::Rng;
 use std::fs::File;
 use std::io::{Read, Write};
@@ -16,7 +16,7 @@ pub struct CPU {
 impl CPU {
     pub fn log(&self, log_file: &mut File) -> std::io::Result<()> {
         let str = serde_json::to_string(self)?;
-        log_file.write_all(str.as_bytes())
+        log_file.write_all(format!("{}\n", str).as_bytes())
     }
 
     pub fn from_log_file(log_file: &mut File) -> std::io::Result<Self> {
@@ -200,5 +200,81 @@ impl CPU {
         }
 
         best_choice
+    }
+}
+
+pub fn eval_cpu<'a>(black: &'a CPU, white: &'a CPU, depth: usize) -> (&'a CPU, usize, usize) {
+    let mut board = Board::new();
+    let mut winner = black;
+
+    loop {
+        let next = if board.player == Player::Black {
+            black.choose_best(&board, depth)
+        } else {
+            white.choose_best(&board, depth)
+        };
+
+        match board.update(next).unwrap() {
+            JudgeResult::Continue => continue,
+            JudgeResult::Win(w) => {
+                winner = w;
+                break;
+            }
+            _ => break,
+        }
+    }
+
+    let (b, w) = board.calc_now_score();
+    (winner, b as usize, w as usize)
+}
+
+pub fn cross_cpu(left: &CPU, right: &CPU, cross_prob: f64, rng: &mut impl Rng) -> CPU {
+    if rng.gen::<f64>() >= cross_prob {
+        return left;
+    }
+
+    let mut stage1 = [0; WEIGHT_LEN];
+    let mut stage2 = [0; WEIGHT_LEN];
+    let mut stage3 = [0; WEIGHT_LEN];
+    let mut stage4 = [0; WEIGHT_LEN];
+
+    let i = rng.gen_range(0, WEIGHT_LEN);
+    let j = rng.gen_range(i, WEIGHT_LEN);
+
+    for k in 0..WEIGHT_LEN {
+        if k < i {
+            stage1[k] = left.stage1[k];
+            stage2[k] = left.stage2[k];
+            stage3[k] = left.stage3[k];
+            stage4[k] = left.stage4[k];
+        } else if k < j {
+            stage1[k] = right.stage1[k];
+            stage2[k] = right.stage2[k];
+            stage3[k] = right.stage3[k];
+            stage4[k] = right.stage4[k];
+        } else {
+            stage1[k] = left.stage1[k];
+            stage2[k] = left.stage2[k];
+            stage3[k] = left.stage3[k];
+            stage4[k] = left.stage4[k];
+        }
+    }
+
+    CPU {
+        stage1,
+        stage2,
+        stage3,
+        stage4,
+    }
+}
+
+pub fn mutate_cpu(cpu: &mut CPU, mutate_prob: f64, rng: &mut impl Rng) {
+    if rng.gen::<f64>() < mutate_prob {
+        for i in 0..WEIGHT_LEN {
+            cpu.stage1[i].wrapping_add(rng.gen());
+            cpu.stage2[i].wrapping_add(rng.gen());
+            cpu.stage3[i].wrapping_add(rng.gen());
+            cpu.stage4[i].wrapping_add(rng.gen());
+        }
     }
 }
