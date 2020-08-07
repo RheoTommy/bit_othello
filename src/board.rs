@@ -63,10 +63,7 @@ impl Board {
     }
 
     pub fn coordinate_to_bit(co: Coordinate) -> BitBoard {
-        let mut mask = 0b_10000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000;
         let (i, j) = co;
-
-        mask = mask >> (i * 8 + j);
-        mask
+        1 << (63 - i * 8 - j)
     }
 }
