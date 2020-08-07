@@ -1,4 +1,4 @@
-use crate::board::{Board, Coordinate};
+use crate::board::{Board, Choice, Coordinate, JudgeResult};
 use rand::Rng;
 
 const WEIGHT_LEN: usize = 11;
@@ -84,5 +84,60 @@ impl CPU {
         score += board.make_legal_board().count_ones() as isize * weights[10] as isize;
 
         score
+    }
+
+    pub fn eval_node(&self, board: &Board, depth: usize, alpha: isize) -> isize {
+        if depth == 0 {
+            return self.eval_board(board);
+        }
+
+        let legal = board.make_legal_board();
+        let mut max_score = -(1 << 62);
+
+        if board.is_skip() {
+            let mut board_clone = board.clone();
+            return match board_clone.update(Choice::Skip).unwrap() {
+                JudgeResult::Continue => -self.eval_node(board_clone, depth - 1, max_score),
+                JudgeResult::Draw => 0,
+                JudgeResult::Win(winner) => {
+                    if winner == board.player {
+                        1 << 60
+                    } else {
+                        -(1 << 60)
+                    }
+                }
+            };
+        }
+
+        for k in 0..64 {
+            if (legal & 1 << (63 - k)) != 0 {
+                let (i, j) = (k / 8, k % 8);
+                let choice = Choice::Coordinate((i, j));
+                let mut board_clone = board.clone();
+
+                match board_clone.update(choice).unwrap() {
+                    JudgeResult::Draw => {
+                        max_score = (max_score).max(0);
+                    }
+                    JudgeResult::Win(winner) => {
+                        if winner == board.player {
+                            return 1 << 60;
+                        } else {
+                            max_score = (max_score).max(-(1 << 60));
+                        }
+                    }
+                    JudgeResult::Continue => {
+                        max_score =
+                            (max_score).max(-self.eval_node(&board_clone, depth - 1, max_score))
+                    }
+                }
+            }
+
+            if alpha >= -max_score {
+                return alpha;
+            }
+        }
+
+        max_score
     }
 }
