@@ -1,6 +1,5 @@
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::io::{Read, Write};
-use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
@@ -30,26 +29,14 @@ impl Config {
         }
     }
 
-    pub fn log(&self, log_file: &Path) -> std::io::Result<()> {
-        let mut log_file = if log_file.exists() {
-            OpenOptions::new()
-                .write(true)
-                .truncate(true)
-                .open(log_file)?
-        } else {
-            File::create(log_file)?
-        };
-
+    pub fn log(&self, log_file: &mut File) -> std::io::Result<()> {
         log_file.set_len(0)?;
-
         let json = serde_json::to_string(self)?;
         log_file.write_all(json.as_bytes())?;
-        log_file.write_all("\n".as_bytes())?;
         log_file.flush()
     }
 
-    pub fn from_log_file(log_file: &Path) -> std::io::Result<Self> {
-        let mut log_file = File::open(log_file)?;
+    pub fn from_log_file(log_file: &mut File) -> std::io::Result<Self> {
         let mut buf = String::new();
         log_file.read_to_string(&mut buf)?;
         let tournament = serde_json::from_str(&buf)?;

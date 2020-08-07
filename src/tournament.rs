@@ -6,8 +6,8 @@ use std::io::{Read, Write};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tournament {
-    cpus: Vec<CPU>,
-    generation: usize,
+    pub cpus: Vec<CPU>,
+    pub generation: usize,
 }
 
 impl Tournament {
@@ -36,7 +36,7 @@ impl Tournament {
         Ok(tournament)
     }
 
-    fn select_parents(&self, selection_size: usize, depth: usize, rng: &mut impl Rng) -> Vec<&CPU> {
+    fn select_parents(&self, selection_size: usize, depth: usize, rng: &mut impl Rng) -> Vec<CPU> {
         let len = self.cpus.len();
         assert_eq!(len % 128, 0);
 
@@ -45,7 +45,7 @@ impl Tournament {
 
         for _ in 0..128 {
             let mut rng = StdRng::from_seed(rng.gen());
-            let self_cpus = &self.cpus;
+            let self_cpus = self.cpus.clone();
 
             let handle = std::thread::spawn(move || {
                 let mut cpus = Vec::with_capacity(len / 128);
@@ -53,7 +53,7 @@ impl Tournament {
                 for _ in 0..len / 128 {
                     let mut iter = self_cpus.choose_multiple(&mut rng, selection_size);
                     let first = iter.next().unwrap();
-                    cpus.push(iter.fold(first, |a, b| eval_cpu(a, b, depth)))
+                    cpus.push(iter.fold(first.clone(), |a, b| eval_cpu(&a, &b, depth).0.clone()))
                 }
 
                 cpus
@@ -63,7 +63,7 @@ impl Tournament {
         }
 
         for handle in handles {
-            cpus.append(handle.join().unwrap());
+            cpus.append(&mut handle.join().unwrap());
         }
 
         cpus
@@ -83,8 +83,8 @@ impl Tournament {
         let mut cpus = Vec::with_capacity(self.cpus.len());
 
         for i in 0..right.len() {
-            cpus.push(cross_cpu(left[i], right[i], cross_prob, rng));
-            cpus.push(cross_cpu(right[i], left[i], cross_prob, rng));
+            cpus.push(cross_cpu(&left[i], &right[i], cross_prob, rng));
+            cpus.push(cross_cpu(&right[i], &left[i], cross_prob, rng));
         }
 
         for cpu in &mut cpus {
