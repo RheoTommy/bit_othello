@@ -1,17 +1,31 @@
 use crate::board::{Board, Choice, Coordinate, JudgeResult};
 use rand::Rng;
+use std::fs::File;
+use std::io::{Read, Write};
 
 const WEIGHT_LEN: usize = 11;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CPU {
-    stage1: [i8; WEIGHT_LEN],
-    stage2: [i8; WEIGHT_LEN],
-    stage3: [i8; WEIGHT_LEN],
-    stage4: [i8; WEIGHT_LEN],
+    pub stage1: [i8; WEIGHT_LEN],
+    pub stage2: [i8; WEIGHT_LEN],
+    pub stage3: [i8; WEIGHT_LEN],
+    pub stage4: [i8; WEIGHT_LEN],
 }
 
 impl CPU {
+    pub fn log(&self, log_file: &mut File) -> std::io::Result<()> {
+        let str = serde_json::to_string(self)?;
+        log_file.write_all(str.as_bytes())
+    }
+
+    pub fn from_log_file(log_file: &mut File) -> std::io::Result<Self> {
+        let mut buf = String::new();
+        log_file.read_to_string(&mut buf)?;
+        let cpu = serde_json::from_str(&buf)?;
+        Ok(cpu)
+    }
+
     pub fn new_random(rng: &mut impl Rng) -> Self {
         let mut stage1 = [0; WEIGHT_LEN];
         let mut stage2 = [0; WEIGHT_LEN];
@@ -92,12 +106,12 @@ impl CPU {
         }
 
         let legal = board.make_legal_board();
-        let mut max_score = -(1 << 62);
+        let mut max_score = -(1 << 61);
 
         if board.is_skip() {
             let mut board_clone = board.clone();
             return match board_clone.update(Choice::Skip).unwrap() {
-                JudgeResult::Continue => -self.eval_node(board_clone, depth - 1, max_score),
+                JudgeResult::Continue => -self.eval_node(&board_clone, depth - 1, max_score),
                 JudgeResult::Draw => 0,
                 JudgeResult::Win(winner) => {
                     if winner == board.player {
@@ -147,7 +161,7 @@ impl CPU {
         }
 
         let legal = board.make_legal_board();
-        let mut max_score = -(1 << 63);
+        let mut max_score = -(1 << 62);
         let mut best_choice = Choice::Skip;
 
         for k in 0..64 {
@@ -164,7 +178,7 @@ impl CPU {
                         }
                     }
                     JudgeResult::Win(winner) => {
-                        if winenr == board.player {
+                        if winner == board.player {
                             return choice;
                         }
 
