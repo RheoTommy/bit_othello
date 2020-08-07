@@ -140,4 +140,51 @@ impl CPU {
 
         max_score
     }
+
+    pub fn choose_best(&self, board: &Board, depth: usize) -> Choice {
+        if board.is_skip() {
+            return Choice::Skip;
+        }
+
+        let legal = board.make_legal_board();
+        let mut max_score = -(1 << 63);
+        let mut best_choice = Choice::Skip;
+
+        for k in 0..64 {
+            if (legal & 1 << (63 - k)) != 0 {
+                let (i, j) = (k / 8, k % 8);
+                let choice = Choice::Coordinate((i, j));
+                let mut board_clone = board.clone();
+
+                match board_clone.update(choice).unwrap() {
+                    JudgeResult::Draw => {
+                        if max_score < 0 {
+                            max_score = 0;
+                            best_choice = choice;
+                        }
+                    }
+                    JudgeResult::Win(winner) => {
+                        if winenr == board.player {
+                            return choice;
+                        }
+
+                        if max_score < -(1 << 60) {
+                            max_score = -(1 << 60);
+                            best_choice = choice;
+                        }
+                    }
+                    JudgeResult::Continue => {
+                        let next_score = -self.eval_node(&board_clone, depth - 1, max_score);
+
+                        if max_score < next_score {
+                            max_score = next_score;
+                            best_choice = choice;
+                        }
+                    }
+                }
+            }
+        }
+
+        best_choice
+    }
 }
