@@ -217,7 +217,7 @@ pub fn eval_cpu<'a>(black: &'a CPU, white: &'a CPU, depth: usize) -> (&'a CPU, u
         match board.update(next).unwrap() {
             JudgeResult::Continue => continue,
             JudgeResult::Win(w) => {
-                winner = w;
+                winner = if w == Player::Black { black } else { white };
                 break;
             }
             _ => break,
@@ -230,7 +230,7 @@ pub fn eval_cpu<'a>(black: &'a CPU, white: &'a CPU, depth: usize) -> (&'a CPU, u
 
 pub fn cross_cpu(left: &CPU, right: &CPU, cross_prob: f64, rng: &mut impl Rng) -> CPU {
     if rng.gen::<f64>() >= cross_prob {
-        return left;
+        return left.clone();
     }
 
     let mut stage1 = [0; WEIGHT_LEN];
@@ -271,10 +271,10 @@ pub fn cross_cpu(left: &CPU, right: &CPU, cross_prob: f64, rng: &mut impl Rng) -
 pub fn mutate_cpu(cpu: &mut CPU, mutate_prob: f64, rng: &mut impl Rng) {
     if rng.gen::<f64>() < mutate_prob {
         for i in 0..WEIGHT_LEN {
-            cpu.stage1[i].wrapping_add(rng.gen());
-            cpu.stage2[i].wrapping_add(rng.gen());
-            cpu.stage3[i].wrapping_add(rng.gen());
-            cpu.stage4[i].wrapping_add(rng.gen());
+            cpu.stage1[i] = cpu.stage1[i].wrapping_add(rng.gen());
+            cpu.stage2[i] = cpu.stage2[i].wrapping_add(rng.gen());
+            cpu.stage3[i] = cpu.stage3[i].wrapping_add(rng.gen());
+            cpu.stage4[i] = cpu.stage4[i].wrapping_add(rng.gen());
         }
     }
 }
