@@ -157,6 +157,41 @@ impl Board {
     pub fn is_possible(&self, co: Coordinate) -> bool {
         (Board::coordinate_to_bit(co) & self.make_legal_board()) != 0
     }
+
+    fn reverse(&mut self, put: BitBoard) {
+        let mut rev = 0;
+        for k in 0..8 {
+            let rev_ = 0;
+            let mut mask = Board::transfer(put, k);
+
+            while (mask != 0) && ((mask & self.opponent_board) != 0) {
+                rev |= mask;
+                mask = Board::transfer(mask, k);
+            }
+
+            if (mask & self.player_board) != 0 {
+                rev |= rev_;
+            }
+        }
+
+        self.player_board ^= put | rev;
+        self.opponent_board ^= rev;
+        self.turn_num += 1;
+    }
+
+    fn transfer(put: BitBoard, k: usize) -> BitBoard {
+        match k {
+            0 => (put << 8) & 0xffffffffffffff00,
+            1 => (put << 7) & 0x7f7f7f7f7f7f7f00,
+            2 => (put >> 1) & 0x7f7f7f7f7f7f7f7f,
+            3 => (put >> 9) & 0x007f7f7f7f7f7f7f,
+            4 => (put >> 8) & 0x00ffffffffffffff,
+            5 => (put >> 7) & 0x00fefefefefefefe,
+            6 => (put << 1) & 0xfefefefefefefefe,
+            7 => (put << 9) & 0xfefefefefefefe00,
+            _ => unimplemented!(),
+        }
+    }
 }
 
 mod tests {
@@ -188,11 +223,22 @@ mod tests {
             legal_board
         )
     }
-    
+
     #[test]
-    fn is_possible_test(){
-        let default_board=Board::new();
+    fn is_possible_test() {
+        let default_board = Board::new();
         assert!(default_board.is_possible((3, 2)));
         assert!(!default_board.is_possible((0, 0)));
+    }
+
+    #[test]
+    fn reverse_test() {
+        let mut default_board = Board::new();
+        default_board.reverse(Board::coordinate_to_bit((3, 2)));
+        eprintln!("{:?}", default_board);
+        assert_eq!(
+            0b_00000000_00000000_00000000_00111000_00010000_00000000_00000000_00000000,
+            default_board.player_board
+        );
     }
 }
