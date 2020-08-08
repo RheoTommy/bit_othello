@@ -12,14 +12,11 @@
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c10afb69-6b32-4977-b610-78271108780d" name="Default Changelist" comment="">
+    <list default="true" id="c10afb69-6b32-4977-b610-78271108780d" name="Default Changelist" comment="探索木と評価関数のリファクタリング">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/board.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/board.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/cpu.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/cpu.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tournament_latest.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/winner_latest.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/tournament.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/tournament.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -154,7 +151,7 @@
       <updated>1596789676531</updated>
       <workItem from="1596789679155" duration="18628000" />
       <workItem from="1596812397856" duration="1517000" />
-      <workItem from="1596848689924" duration="18098000" />
+      <workItem from="1596848689924" duration="24882000" />
     </task>
     <task id="LOCAL-00001" summary="BoardとTurnの実装">
       <created>1596789982604</created>
@@ -268,7 +265,21 @@
       <option name="project" value="LOCAL" />
       <updated>1596875992748</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="CPUとTournament以外のリファクタリング">
+      <created>1596878934762</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1596878934762</updated>
+    </task>
+    <task id="LOCAL-00018" summary="探索木と評価関数のリファクタリング">
+      <created>1596879357383</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1596879357383</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TerminalProjectNonSharedOptionsProvider">
@@ -294,7 +305,9 @@
     <MESSAGE value="ログファイルのバグ修正2" />
     <MESSAGE value="ボード自体は大丈夫だと思うけど、CPUと遺伝アルゴは死んでる" />
     <MESSAGE value="Boardのリファクタリング" />
-    <option name="LAST_COMMIT_MESSAGE" value="Boardのリファクタリング" />
+    <MESSAGE value="CPUとTournament以外のリファクタリング" />
+    <MESSAGE value="探索木と評価関数のリファクタリング" />
+    <option name="LAST_COMMIT_MESSAGE" value="探索木と評価関数のリファクタリング" />
   </component>
   <component name="WindowStateProjectService">
     <state x="92" y="92" width="1736" height="856" key="#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog" timestamp="1596790759272">
@@ -305,10 +318,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="765" y="236" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1596791019466" />
-    <state x="535" y="6" key="CommitChangelistDialog2" timestamp="1596875990985">
+    <state x="535" y="6" key="CommitChangelistDialog2" timestamp="1596887256267">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="535" y="6" key="CommitChangelistDialog2/0.0.1920.1040@0.0.1920.1040" timestamp="1596875990985" />
+    <state x="535" y="6" key="CommitChangelistDialog2/0.0.1920.1040@0.0.1920.1040" timestamp="1596887256267" />
     <state x="739" y="261" key="FileChooserDialogImpl" timestamp="1596793704002">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -321,34 +334,34 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="724" y="139" key="Github.UntrackedFilesDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1596789735013" />
-    <state width="1877" height="279" key="GridCell.Tab.0.bottom" timestamp="1596878297158">
+    <state width="1877" height="279" key="GridCell.Tab.0.bottom" timestamp="1596892783711">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="279" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1596878297158" />
-    <state width="1877" height="279" key="GridCell.Tab.0.center" timestamp="1596878297158">
+    <state width="1877" height="279" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1596892783711" />
+    <state width="1877" height="279" key="GridCell.Tab.0.center" timestamp="1596892783711">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="279" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1596878297158" />
-    <state width="1877" height="279" key="GridCell.Tab.0.left" timestamp="1596878297158">
+    <state width="1877" height="279" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1596892783711" />
+    <state width="1877" height="279" key="GridCell.Tab.0.left" timestamp="1596892783711">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="279" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1596878297158" />
-    <state width="1877" height="279" key="GridCell.Tab.0.right" timestamp="1596878297158">
+    <state width="1877" height="279" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1596892783711" />
+    <state width="1877" height="279" key="GridCell.Tab.0.right" timestamp="1596892783711">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1877" height="279" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1596878297158" />
+    <state width="1877" height="279" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1596892783711" />
     <state x="468" y="165" key="SettingsEditor" timestamp="1596793705735">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="468" y="165" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1596793705735" />
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1596870738788">
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1596879361167">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1596870738788" />
-    <state x="616" y="240" width="672" height="677" key="run.anything.popup" timestamp="1596878250585">
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1596879361167" />
+    <state x="616" y="240" width="672" height="677" key="run.anything.popup" timestamp="1596892783680">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="616" y="240" width="672" height="677" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1596878250585" />
+    <state x="616" y="240" width="672" height="677" key="run.anything.popup/0.0.1920.1040@0.0.1920.1040" timestamp="1596892783680" />
     <state x="623" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1596807277959">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>

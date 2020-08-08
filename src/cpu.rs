@@ -65,6 +65,7 @@ impl CPU {
         }
     }
 
+    /// 盤面を次の手の人視点で評価
     pub fn eval_board(&self, board: &Board) -> isize {
         fn mirror(i: usize) -> usize {
             match i {
@@ -126,6 +127,7 @@ impl CPU {
         score
     }
 
+    /// Nodeを次の人の手視点で評価
     pub fn eval_node(&self, board: &Board, depth: usize, alpha: isize) -> isize {
         if depth == 0 {
             return self.eval_board(board);
@@ -183,6 +185,7 @@ impl CPU {
         max_score
     }
 
+    /// 次の一手として最適なものを選ぶ
     pub fn choose_best(&self, board: &Board, depth: usize) -> Choice {
         if board.is_skip() {
             return Choice::Skip;
@@ -229,9 +232,26 @@ impl CPU {
 
         best_choice
     }
+
+    /// 遺伝子を一定の確率にランダムで乱数にする
+    pub fn mutate_cpu(&mut self, mutate_prob: f64, rng: &mut impl Rng) {
+        fn mutate(weights: &mut [i8], mutate_prob: f64, rng: &mut impl Rng) {
+            for weight in weights {
+                if mutate_prob < rng.gen::<f64>() {
+                    *weight = rng.gen();
+                }
+            }
+        }
+
+        mutate(&mut self.stage1[..], mutate_prob, rng);
+        mutate(&mut self.stage2[..], mutate_prob, rng);
+        mutate(&mut self.stage3[..], mutate_prob, rng);
+        mutate(&mut self.stage4[..], mutate_prob, rng);
+    }
 }
 
-pub fn eval_cpu<'a>(black: &'a CPU, white: &'a CPU, depth: usize) -> (&'a CPU, usize, usize) {
+/// 2つのCPUのうち優秀な方を返す
+pub fn eval_cpu<'a>(black: &'a CPU, white: &'a CPU, depth: usize) -> &'a CPU {
     let mut board = Board::new();
     let mut winner = black;
 
@@ -252,27 +272,18 @@ pub fn eval_cpu<'a>(black: &'a CPU, white: &'a CPU, depth: usize) -> (&'a CPU, u
         }
     }
 
-    let (b, w) = board.calc_now_score();
-    let (b, w) = if board.player == Player::Black {
-        (b, w)
-    } else {
-        (w, b)
-    };
-    (winner, b as usize, w as usize)
+    winner
 }
 
-pub fn cross_cpu(left: &CPU, right: &CPU, cross_prob: f64, rng: &mut impl Rng) -> CPU {
-    if rng.gen::<f64>() >= cross_prob {
-        return left.clone();
-    }
+/// ランダムな2点で遺伝子を入れ替えたCPUを作成する
+pub fn two_point_cross(left: &CPU, right: &CPU, rng: &mut impl Rng) -> CPU {
+    let i = rng.gen_range(0, WEIGHT_LEN);
+    let j = rng.gen_range(i, WEIGHT_LEN);
 
     let mut stage1 = [0; WEIGHT_LEN];
     let mut stage2 = [0; WEIGHT_LEN];
     let mut stage3 = [0; WEIGHT_LEN];
     let mut stage4 = [0; WEIGHT_LEN];
-
-    let i = rng.gen_range(0, WEIGHT_LEN);
-    let j = rng.gen_range(i, WEIGHT_LEN);
 
     for k in 0..WEIGHT_LEN {
         if k < i {
@@ -301,17 +312,25 @@ pub fn cross_cpu(left: &CPU, right: &CPU, cross_prob: f64, rng: &mut impl Rng) -
     }
 }
 
-pub fn cross_cpu_alpha(left: &CPU, right: &CPU, l: usize, r: usize, rng: &mut impl Rng) -> CPU {
+/// 各遺伝子をランダムに選択したCPUを作る
+pub fn random_cross(left: &CPU, right: &CPU, rng: &mut impl Rng) -> CPU {
     let mut stage1 = [0; WEIGHT_LEN];
     let mut stage2 = [0; WEIGHT_LEN];
     let mut stage3 = [0; WEIGHT_LEN];
     let mut stage4 = [0; WEIGHT_LEN];
 
     for k in 0..WEIGHT_LEN {
-        stage1[k] = cross_calc(left.stage1[k], l, right.stage1[k], r, rng);
-        stage2[k] = cross_calc(left.stage2[k], l, right.stage2[k], r, rng);
-        stage3[k] = cross_calc(left.stage3[k], l, right.stage3[k], r, rng);
-        stage4[k] = cross_calc(left.stage4[k], l, right.stage4[k], r, rng);
+        if rng.gen::<bool>() {
+            stage1[k] = left.stage1[k];
+            stage2[k] = left.stage2[k];
+            stage3[k] = left.stage3[k];
+            stage4[k] = left.stage4[k];
+        } else {
+            stage1[k] = right.stage1[k];
+            stage2[k] = right.stage2[k];
+            stage3[k] = right.stage3[k];
+            stage4[k] = right.stage4[k];
+        }
     }
 
     CPU {
@@ -319,25 +338,5 @@ pub fn cross_cpu_alpha(left: &CPU, right: &CPU, l: usize, r: usize, rng: &mut im
         stage2,
         stage3,
         stage4,
-    }
-}
-
-fn cross_calc(a: i8, aa: usize, b: i8, bb: usize, rng: &mut impl Rng) -> i8 {
-    let a = a as isize;
-    let aa = aa as isize;
-    let b = b as isize;
-    let bb = bb as isize;
-
-    (((a * aa + b * bb) / (aa + bb)) as f64 * (1.5 + 0.1 * (1.0 - 2.0 * rng.gen::<f64>()))) as i8
-}
-
-pub fn mutate_cpu(cpu: &mut CPU, mutate_prob: f64, rng: &mut impl Rng) {
-    if rng.gen::<f64>() < mutate_prob {
-        for i in 0..WEIGHT_LEN {
-            cpu.stage1[i] = cpu.stage1[i].wrapping_add(rng.gen());
-            cpu.stage2[i] = cpu.stage2[i].wrapping_add(rng.gen());
-            cpu.stage3[i] = cpu.stage3[i].wrapping_add(rng.gen());
-            cpu.stage4[i] = cpu.stage4[i].wrapping_add(rng.gen());
-        }
     }
 }

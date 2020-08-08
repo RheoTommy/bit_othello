@@ -1,5 +1,5 @@
-use crate::cpu::{cross_cpu, cross_cpu_alpha, eval_cpu, mutate_cpu, CPU};
-use rand::prelude::{SliceRandom, StdRng};
+use crate::cpu::{eval_cpu, random_cross, two_point_cross, CPU};
+use rand::prelude::StdRng;
 use rand::{Rng, SeedableRng};
 use std::fs::File;
 use std::io::{Read, Write};
@@ -37,89 +37,79 @@ impl Tournament {
         Ok(tournament)
     }
 
-    fn select_parents(&self, selection_size: usize, depth: usize, rng: &mut impl Rng) -> Vec<CPU> {
-        let len = self.cpus.len();
-        assert_eq!(len % 128, 0);
+    pub fn upgrade_generation(&mut self, mutate_prob: f64, depth: usize, rng: &mut impl Rng) {
+        assert_eq!(self.cpus.len(), 4096);
 
-        let mut cpus = Vec::with_capacity(len / 128);
-        let mut handles = Vec::with_capacity(128);
+        let mut handles = Vec::with_capacity(4096);
+        let mut cpus = Vec::with_capacity(4096);
 
-        for _ in 0..128 {
+        for i in 0..64 {
+            let thread_cpu = self.cpus.clone();
             let mut rng = StdRng::from_seed(rng.gen());
-            let self_cpus = self.cpus.clone();
 
             let handle = std::thread::spawn(move || {
-                let mut cpus = Vec::with_capacity(len / 128);
+                let thread_cpu = &thread_cpu[i * 64..(i + 1) * 64];
+                let mut cpus = Vec::with_capacity(64);
 
-                for _ in 0..len / 128 {
-                    let mut iter = self_cpus.choose_multiple(&mut rng, selection_size);
-                    let first = iter.next().unwrap();
-                    cpus.push(iter.fold(first.clone(), |a, b| eval_cpu(&a, &b, depth).0.clone()))
-                }
+                for i in 0..8 {
+                    let tournament_cpus = &thread_cpu[i * 8..(i + 1) * 8];
+                    let mut win_score = [0; 8];
 
-                cpus
-            });
+                    for i in 0..8 {
+                        for j in 0..8 {
+                            if i <= j {
+                                continue;
+                            }
 
-            handles.push(handle);
-        }
+                            let left = &tournament_cpus[i];
+                            let right = &tournament_cpus[j];
 
-        for handle in handles {
-            cpus.append(&mut handle.join().unwrap());
-        }
+                            let winner = eval_cpu(left, right, depth);
+                            if winner == left {
+                                win_score[i] += 1;
+                            } else {
+                                win_score[j] += 1;
+                            }
+                        }
+                    }
 
-        cpus
-    }
+                    let mut sort_by_strong = win_score.iter().enumerate().collect::<Vec<_>>();
+                    sort_by_strong.sort_by_key(|(_cpu_index, &win_num)| -win_num);
+                    let sort_by_strong = sort_by_strong
+                        .into_iter()
+                        .map(|(cpu_index, _win_num)| &tournament_cpus[cpu_index])
+                        .collect::<Vec<_>>();
 
-    pub fn upgrade_generation(
-        &mut self,
-        selection_size: usize,
-        depth: usize,
-        cross_prob: f64,
-        mutate_prob: f64,
-        rng: &mut impl Rng,
-    ) {
-        let mut left = self.select_parents(selection_size, depth, rng);
-        let right = left.split_off(left.len() / 2);
+                    let mut cpu_vec = Vec::with_capacity(64);
+                    // 最優秀1体
+                    cpu_vec.push(sort_by_strong[0].clone());
 
-        let mut cpus = Vec::with_capacity(self.cpus.len());
+                    // 2点交叉3体
+                    cpu_vec.push(two_point_cross(
+                        sort_by_strong[0],
+                        sort_by_strong[1],
+                        &mut rng,
+                    ));
+                    cpu_vec.push(two_point_cross(
+                        sort_by_strong[0],
+                        sort_by_strong[2],
+                        &mut rng,
+                    ));
+                    cpu_vec.push(two_point_cross(
+                        sort_by_strong[1],
+                        sort_by_strong[2],
+                        &mut rng,
+                    ));
 
-        for i in 0..right.len() {
-            cpus.push(cross_cpu(&left[i], &right[i], cross_prob, rng));
-            cpus.push(cross_cpu(&right[i], &left[i], cross_prob, rng));
-        }
+                    // ランダム交叉1体
+                    cpu_vec.push(random_cross(sort_by_strong[0], sort_by_strong[1], &mut rng));
+                    cpu_vec.push(random_cross(sort_by_strong[0], sort_by_strong[2], &mut rng));
+                    cpu_vec.push(random_cross(sort_by_strong[1], sort_by_strong[2], &mut rng));
 
-        for cpu in &mut cpus {
-            mutate_cpu(cpu, mutate_prob, rng);
-        }
+                    // ランダム1体
+                    cpu_vec.push(CPU::new_random(&mut rng));
 
-        self.cpus = cpus;
-        self.generation += 1;
-    }
-
-    pub fn upgrade_generation_alpha(
-        &mut self,
-        depth: usize,
-        mutate_prob: f64,
-        rng: &mut impl Rng,
-    ) {
-        let len = self.cpus.len();
-        assert_eq!(len % 128, 0);
-
-        let mut cpus = Vec::with_capacity(len / 128);
-        let mut handles = Vec::with_capacity(128);
-
-        for _ in 0..128 {
-            let self_cpus = self.cpus.clone();
-            let mut rng = StdRng::from_seed(rng.gen());
-            let handle = std::thread::spawn(move || {
-                let mut cpus = Vec::with_capacity(len / 128);
-                for _ in 0..len / 128 {
-                    let mut iter = self_cpus.choose_multiple(&mut rng, 2);
-                    let left = iter.next().unwrap();
-                    let right = iter.next().unwrap();
-
-                    let (_winner, l, r) = eval_cpu(left, right, depth);
-                    cpus.push(cross_cpu_alpha(left, right, l, r, &mut rng));
+                    cpus.append(&mut cpu_vec);
                 }
 
                 cpus
@@ -133,7 +123,7 @@ impl Tournament {
         }
 
         for cpu in &mut cpus {
-            mutate_cpu(cpu, mutate_prob, rng);
+            cpu.mutate_cpu(mutate_prob, rng);
         }
 
         self.cpus = cpus;

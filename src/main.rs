@@ -75,13 +75,13 @@ pub fn learn(
 
     loop {
         println!("Now generation: {}", tournament.generation);
-        tournament.upgrade_generation_alpha(learn_depth, mutate_prob, rng);
+        tournament.upgrade_generation(mutate_prob, learn_depth, rng);
 
         if tournament.generation % log_tournament_generation == 0 {
             tournament.log(tournament_log_file).unwrap();
             let mut iter = tournament.cpus.iter();
             let first = iter.next().unwrap();
-            iter.fold(first, |a, b| eval_cpu(a, b, learn_depth).0)
+            iter.fold(first, |a, b| eval_cpu(a, b, learn_depth))
                 .log(winner_latest_log_file)
                 .unwrap();
         }
