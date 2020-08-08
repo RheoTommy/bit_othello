@@ -48,6 +48,14 @@ impl CPU {
         }
     }
 
+    pub fn eval_board_diff(&self, board: &Board) -> isize {
+        let player_score = self.eval_board(board);
+        let mut board_clone = board.clone();
+        board_clone.update(Choice::Skip).unwrap();
+        let opponent_score = self.eval_board(&board_clone);
+        player_score - opponent_score
+    }
+
     pub fn eval_board(&self, board: &Board) -> isize {
         fn mirror(i: usize) -> usize {
             match i {
@@ -103,7 +111,7 @@ impl CPU {
 
     pub fn eval_node(&self, board: &Board, depth: usize, alpha: isize) -> isize {
         if depth == 0 {
-            return self.eval_board(board);
+            return self.eval_board_diff(board);
         }
 
         let legal = board.make_legal_board();
@@ -143,13 +151,13 @@ impl CPU {
                     }
                     JudgeResult::Continue => {
                         max_score =
-                            (max_score).max(-self.eval_node(&board_clone, depth - 1, max_score))
+                            (max_score).max(-self.eval_node(&board_clone, depth - 1, max_score));
+
+                        if alpha >= -max_score {
+                            return alpha;
+                        }
                     }
                 }
-            }
-
-            if alpha >= -max_score {
-                return alpha;
             }
         }
 
@@ -204,7 +212,11 @@ impl CPU {
     }
 }
 
-pub fn eval_cpu<'a>(black: &'a CPU, white: &'a CPU, depth: usize) -> (&'a CPU, usize, usize) {
+pub fn eval_cpu<'a>(
+    black: &'a CPU,
+    white: &'a CPU,
+    depth: usize,
+) -> (&'a CPU, usize, usize) {
     let mut board = Board::new();
     let mut winner = black;
 

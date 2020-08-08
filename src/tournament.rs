@@ -53,7 +53,9 @@ impl Tournament {
                 for _ in 0..len / 128 {
                     let mut iter = self_cpus.choose_multiple(&mut rng, selection_size);
                     let first = iter.next().unwrap();
-                    cpus.push(iter.fold(first.clone(), |a, b| eval_cpu(&a, &b, depth).0.clone()))
+                    cpus.push(iter.fold(first.clone(), |a, b| {
+                        eval_cpu(&a, &b, depth).0.clone()
+                    }))
                 }
 
                 cpus
