@@ -1,5 +1,5 @@
 use crate::cpu::{eval_cpu, random_cross, two_point_cross, CPU};
-use rand::prelude::StdRng;
+use rand::prelude::{SliceRandom, StdRng};
 use rand::{Rng, SeedableRng};
 use std::fs::File;
 use std::io::{Read, Write};
@@ -44,6 +44,7 @@ impl Tournament {
         let mut cpus = Vec::with_capacity(4096);
 
         for i in 0..64 {
+            self.cpus.shuffle(rng);
             let thread_cpu = self.cpus.clone();
             let mut rng = StdRng::from_seed(rng.gen());
 
