@@ -167,13 +167,15 @@ impl CPU {
                         }
                     }
                     JudgeResult::Continue => {
-                        max_score =
-                            (max_score).max(-self.eval_node(&board_clone, depth - 1, max_score));
+                        let opponent_score = self.eval_node(&board_clone, depth - 1, max_score);
 
-                        if alpha >= -max_score {
-                            return alpha;
-                        }
+                        max_score = (max_score).max(-opponent_score);
                     }
+                }
+
+                // すでに確定した最低点より低い点数を含むNodeは枝刈り
+                if alpha >= -max_score {
+                    return max_score;
                 }
             }
         }
