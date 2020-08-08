@@ -5,7 +5,7 @@ use std::io::{Read, Write};
 
 const WEIGHT_LEN: usize = 11;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct CPU {
     pub stage1: [i8; WEIGHT_LEN],
     pub stage2: [i8; WEIGHT_LEN],
@@ -14,12 +14,14 @@ pub struct CPU {
 }
 
 impl CPU {
+    /// ファイルに改行を加えて出力
     pub fn log(&self, log_file: &mut File) -> std::io::Result<()> {
         let str = serde_json::to_string(self)?;
         log_file.write_all(format!("\n{}", str).as_bytes())?;
         log_file.flush()
     }
 
+    /// ファイルから文字列として入力を受け取り、最後の行をパースして返す
     pub fn from_log_file(log_file: &mut File) -> std::io::Result<Self> {
         let mut buf = String::new();
         log_file.read_to_string(&mut buf)?;
@@ -28,6 +30,7 @@ impl CPU {
         Ok(cpu)
     }
 
+    /// 乱数生成器を受け取り、ランダムに値を決めたCPUをつくる
     pub fn new_random(rng: &mut impl Rng) -> Self {
         let mut stage1 = [0; WEIGHT_LEN];
         let mut stage2 = [0; WEIGHT_LEN];
@@ -49,12 +52,16 @@ impl CPU {
         }
     }
 
-    pub fn eval_board_diff(&self, board: &Board) -> isize {
-        let player_score = self.eval_board(board);
-        let mut board_clone = board.clone();
-        board_clone.update(Choice::Skip).unwrap();
-        let opponent_score = self.eval_board(&board_clone);
-        player_score - opponent_score
+    /// そこそこ強いであろう値を持つCPU
+    pub fn new_alpha() -> Self {
+        let weight = [120, -20, -40, 20, -5, 15, 5, -5, 3, 3, 0];
+
+        Self {
+            stage1: weight,
+            stage2: weight,
+            stage3: weight,
+            stage4: weight,
+        }
     }
 
     pub fn eval_board(&self, board: &Board) -> isize {
@@ -112,7 +119,7 @@ impl CPU {
 
     pub fn eval_node(&self, board: &Board, depth: usize, alpha: isize) -> isize {
         if depth == 0 {
-            return self.eval_board_diff(board);
+            return self.eval_board(board);
         }
 
         let legal = board.make_legal_board();
@@ -213,11 +220,7 @@ impl CPU {
     }
 }
 
-pub fn eval_cpu<'a>(
-    black: &'a CPU,
-    white: &'a CPU,
-    depth: usize,
-) -> (&'a CPU, usize, usize) {
+pub fn eval_cpu<'a>(black: &'a CPU, white: &'a CPU, depth: usize) -> (&'a CPU, usize, usize) {
     let mut board = Board::new();
     let mut winner = black;
 
@@ -239,6 +242,11 @@ pub fn eval_cpu<'a>(
     }
 
     let (b, w) = board.calc_now_score();
+    let (b, w) = if board.player == Player::Black {
+        (b, w)
+    } else {
+        (w, b)
+    };
     (winner, b as usize, w as usize)
 }
 
@@ -280,6 +288,36 @@ pub fn cross_cpu(left: &CPU, right: &CPU, cross_prob: f64, rng: &mut impl Rng) -
         stage3,
         stage4,
     }
+}
+
+pub fn cross_cpu_alpha(left: &CPU, right: &CPU, l: usize, r: usize, rng: &mut impl Rng) -> CPU {
+    let mut stage1 = [0; WEIGHT_LEN];
+    let mut stage2 = [0; WEIGHT_LEN];
+    let mut stage3 = [0; WEIGHT_LEN];
+    let mut stage4 = [0; WEIGHT_LEN];
+
+    for k in 0..WEIGHT_LEN {
+        stage1[k] = cross_calc(left.stage1[k], l, right.stage1[k], r, rng);
+        stage2[k] = cross_calc(left.stage2[k], l, right.stage2[k], r, rng);
+        stage3[k] = cross_calc(left.stage3[k], l, right.stage3[k], r, rng);
+        stage4[k] = cross_calc(left.stage4[k], l, right.stage4[k], r, rng);
+    }
+
+    CPU {
+        stage1,
+        stage2,
+        stage3,
+        stage4,
+    }
+}
+
+fn cross_calc(a: i8, aa: usize, b: i8, bb: usize, rng: &mut impl Rng) -> i8 {
+    let a = a as isize;
+    let aa = aa as isize;
+    let b = b as isize;
+    let bb = bb as isize;
+
+    (((a * aa + b * bb) / (aa + bb)) as f64 * (1.5 + 0.1 * (1.0 - 2.0 * rng.gen::<f64>()))) as i8
 }
 
 pub fn mutate_cpu(cpu: &mut CPU, mutate_prob: f64, rng: &mut impl Rng) {

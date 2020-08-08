@@ -48,9 +48,9 @@ fn main() {
             &mut winner_latest_log_file,
             config.log_tournament_generation,
             config.tournament_size,
-            config.select_tournament_size,
+            // config.select_tournament_size,
             config.learning_depth,
-            config.cross_prob,
+            // config.cross_prob,
             config.mutate_prob,
             &mut rng,
         ),
@@ -63,9 +63,9 @@ pub fn learn(
     winner_latest_log_file: &mut File,
     log_tournament_generation: usize,
     tournament_size: usize,
-    selection_size: usize,
+    // selection_size: usize,
     learn_depth: usize,
-    cross_prob: f64,
+    // cross_prob: f64,
     mutate_prob: f64,
     rng: &mut impl Rng,
 ) {
@@ -79,7 +79,7 @@ pub fn learn(
 
     loop {
         println!("Now generation: {}", tournament.generation);
-        tournament.upgrade_generation(selection_size, learn_depth, cross_prob, mutate_prob, rng);
+        tournament.upgrade_generation_alpha(learn_depth, mutate_prob, rng);
 
         if tournament.generation % log_tournament_generation == 0 {
             tournament.log(tournament_log_file).unwrap();
@@ -99,6 +99,7 @@ pub fn simulate(winner_log_file: &mut File, simulate_depth: usize, rng: &mut imp
     let cpu = if let Err(e) = cpu {
         eprintln!("{}", e);
         CPU::new_random(rng)
+    // CPU::new_alpha()
     } else {
         cpu.unwrap()
     };

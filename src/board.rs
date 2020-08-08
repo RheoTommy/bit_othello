@@ -191,7 +191,7 @@ impl Board {
     fn skip(&mut self) {
         self.turn += 1;
         self.player = self.player.next();
-        swap(&mut self.player_board, &mut self.opponent_board)
+        swap(&mut self.opponent_board, &mut self.player_board);
     }
 
     pub fn update(&mut self, choice: Choice) -> Result<JudgeResult, &'static str> {
@@ -217,8 +217,8 @@ impl Board {
         }
 
         self.reverse(put);
-
-        swap(&mut self.player_board, &mut self.opponent_board);
+    
+        swap(&mut self.opponent_board, &mut self.player_board);
         self.player = self.player.next();
         self.turn += 1;
 

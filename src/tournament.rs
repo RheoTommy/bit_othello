@@ -1,4 +1,4 @@
-use crate::cpu::{cross_cpu, eval_cpu, mutate_cpu, CPU};
+use crate::cpu::{cross_cpu, cross_cpu_alpha, eval_cpu, mutate_cpu, CPU};
 use rand::prelude::{SliceRandom, StdRng};
 use rand::{Rng, SeedableRng};
 use std::fs::File;
@@ -86,6 +86,50 @@ impl Tournament {
         for i in 0..right.len() {
             cpus.push(cross_cpu(&left[i], &right[i], cross_prob, rng));
             cpus.push(cross_cpu(&right[i], &left[i], cross_prob, rng));
+        }
+
+        for cpu in &mut cpus {
+            mutate_cpu(cpu, mutate_prob, rng);
+        }
+
+        self.cpus = cpus;
+        self.generation += 1;
+    }
+
+    pub fn upgrade_generation_alpha(
+        &mut self,
+        depth: usize,
+        mutate_prob: f64,
+        rng: &mut impl Rng,
+    ) {
+        let len = self.cpus.len();
+        assert_eq!(len % 128, 0);
+
+        let mut cpus = Vec::with_capacity(len / 128);
+        let mut handles = Vec::with_capacity(128);
+
+        for _ in 0..128 {
+            let self_cpus = self.cpus.clone();
+            let mut rng = StdRng::from_seed(rng.gen());
+            let handle = std::thread::spawn(move || {
+                let mut cpus = Vec::with_capacity(len / 128);
+                for _ in 0..len / 128 {
+                    let mut iter = self_cpus.choose_multiple(&mut rng, 2);
+                    let left = iter.next().unwrap();
+                    let right = iter.next().unwrap();
+
+                    let (_winner, l, r) = eval_cpu(left, right, depth);
+                    cpus.push(cross_cpu_alpha(left, right, l, r, &mut rng));
+                }
+
+                cpus
+            });
+
+            handles.push(handle);
+        }
+
+        for handle in handles {
+            cpus.append(&mut handle.join().unwrap());
         }
 
         for cpu in &mut cpus {
