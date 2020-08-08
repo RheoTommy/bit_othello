@@ -25,7 +25,7 @@ impl CPU {
     pub fn from_log_file(log_file: &mut File) -> std::io::Result<Self> {
         let mut buf = String::new();
         log_file.read_to_string(&mut buf)?;
-        let buf = buf.lines().last().unwrap_or("Invalid");
+        let buf = buf.lines().last().unwrap_or("Invalid"); // "Invalid"ならパースに失敗するので
         let cpu = serde_json::from_str(&buf)?;
         Ok(cpu)
     }
@@ -54,7 +54,8 @@ impl CPU {
 
     /// そこそこ強いであろう値を持つCPU
     pub fn new_alpha() -> Self {
-        let weight = [120, -20, -40, 20, -5, 15, 5, -5, 3, 3, 0];
+        // let weight = [120, -20, -40, 20, -5, 15, 5, -5, 3, 3, 0];
+        let weight = [120, -12, -15, 0, -3, 0, -1, -3, -1, -1, 0];
 
         Self {
             stage1: weight,
@@ -106,12 +107,20 @@ impl CPU {
             let (i, j) = (k / 8, k % 8);
             let index = co_to_index((i, j));
 
+            // 自分の駒なら加点
             score += match board.player_board & 1 << (63 - k) {
                 0 => 0,
                 _ => weights[index] as isize,
-            }
+            };
+
+            // 敵の駒なら減点
+            score -= match board.opponent_board & 1 << (63 - k) {
+                0 => 0,
+                _ => weights[index] as isize,
+            };
         }
 
+        // 次に打てる手の数に応じて加点
         score += board.make_legal_board().count_ones() as isize * weights[10] as isize;
 
         score
@@ -122,14 +131,9 @@ impl CPU {
             return self.eval_board(board);
         }
 
-        let legal = board.make_legal_board();
-        let mut max_score = -(1 << 61);
-
         if board.is_skip() {
             let mut board_clone = board.clone();
             return match board_clone.update(Choice::Skip).unwrap() {
-                JudgeResult::Continue => -self.eval_node(&board_clone, depth - 1, max_score),
-                JudgeResult::Draw => 0,
                 JudgeResult::Win(winner) => {
                     if winner == board.player {
                         1 << 60
@@ -137,8 +141,13 @@ impl CPU {
                         -(1 << 60)
                     }
                 }
+                JudgeResult::Draw => 0,
+                JudgeResult::Continue => -self.eval_node(&board_clone, depth - 1, -(1 << 62)),
             };
         }
+
+        let legal = board.make_legal_board();
+        let mut max_score = -(1 << 61);
 
         for k in 0..64 {
             if (legal & 1 << (63 - k)) != 0 {

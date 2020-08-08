@@ -1,1 +1,0 @@
-{"log_tournament_generation":25,"tournament_size":4096,"select_tournament_size":4,"learning_depth":1,"simulation_depth":8,"cross_prob":0.75,"mutate_prob":0.025,"tournament_latest_file_name":"tournament_latest.json","winner_latest_file_name":"winner_latest.json"}

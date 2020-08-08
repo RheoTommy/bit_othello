@@ -218,8 +218,8 @@ impl Board {
         if !(i < 8 && j < 8) {
             return Err("Out of index!");
         }
-
-        if !self.is_possible(put) {
+        
+        if !self.is_possible(co) {
             return Err("Impposible Choice!");
         }
 
@@ -260,11 +260,11 @@ impl Board {
         let mut rev = 0;
         for k in 0..8 {
             let mut rev_ = 0;
-            let mut mask = Board::transfer(put, k);
+            let mut mask = transfer(put, k);
 
             while (mask != 0) && ((mask & self.opponent_board) != 0) {
                 rev_ |= mask;
-                mask = Board::transfer(mask, k);
+                mask = transfer(mask, k);
             }
 
             if (mask & self.player_board) != 0 {

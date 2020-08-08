@@ -38,11 +38,7 @@ fn main() {
 
     let arg = args().skip(1).next().expect("No args!");
     match arg {
-        a if &a == "simulate" => simulate(
-            &mut winner_latest_log_file,
-            config.simulation_depth,
-            &mut rng,
-        ),
+        a if &a == "simulate" => simulate(&mut winner_latest_log_file, config.simulation_depth),
         a if &a == "learn" => learn(
             &mut tournament_latest_log_file,
             &mut winner_latest_log_file,
@@ -92,20 +88,19 @@ pub fn learn(
     }
 }
 
-pub fn simulate(winner_log_file: &mut File, simulate_depth: usize, rng: &mut impl Rng) {
+pub fn simulate(winner_log_file: &mut File, simulate_depth: usize) {
     let mut board = Board::new();
 
     let cpu = CPU::from_log_file(winner_log_file);
     let cpu = if let Err(e) = cpu {
         eprintln!("{}", e);
-        CPU::new_random(rng)
-    // CPU::new_alpha()
+        CPU::new_alpha()
     } else {
         cpu.unwrap()
     };
 
     loop {
-        eprintln!("{:?}", board);
+        eprintln!("{:?}score: {}\n", board, cpu.eval_board(&board));
 
         let next = if board.player == Player::Black {
             cpu.choose_best(&board, simulate_depth)
