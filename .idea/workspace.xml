@@ -13,6 +13,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c10afb69-6b32-4977-b610-78271108780d" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/tournament.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/tournament.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -148,7 +149,7 @@
       <updated>1596789676531</updated>
       <workItem from="1596789679155" duration="18628000" />
       <workItem from="1596812397856" duration="1517000" />
-      <workItem from="1596848689924" duration="25749000" />
+      <workItem from="1596848689924" duration="26444000" />
     </task>
     <task id="LOCAL-00001" summary="BoardとTurnの実装">
       <created>1596789982604</created>
@@ -283,7 +284,14 @@
       <option name="project" value="LOCAL" />
       <updated>1596892979206</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="交叉にシャッフル処理を追加し、64体内だけでの交叉しかしないバグを修正">
+      <created>1596895552986</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1596895552986</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TerminalProjectNonSharedOptionsProvider">
@@ -312,7 +320,8 @@
     <MESSAGE value="CPUとTournament以外のリファクタリング" />
     <MESSAGE value="探索木と評価関数のリファクタリング" />
     <MESSAGE value="交叉方法や選抜方法の変更など、世代更新の処理の大幅な変更" />
-    <option name="LAST_COMMIT_MESSAGE" value="交叉方法や選抜方法の変更など、世代更新の処理の大幅な変更" />
+    <MESSAGE value="交叉にシャッフル処理を追加し、64体内だけでの交叉しかしないバグを修正" />
+    <option name="LAST_COMMIT_MESSAGE" value="交叉にシャッフル処理を追加し、64体内だけでの交叉しかしないバグを修正" />
   </component>
   <component name="WindowStateProjectService">
     <state x="92" y="92" width="1736" height="856" key="#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog" timestamp="1596790759272">
@@ -323,10 +332,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="765" y="236" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040@0.0.1920.1040" timestamp="1596791019466" />
-    <state x="535" y="6" key="CommitChangelistDialog2" timestamp="1596892978256">
+    <state x="535" y="6" key="CommitChangelistDialog2" timestamp="1596895552037">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="535" y="6" key="CommitChangelistDialog2/0.0.1920.1040@0.0.1920.1040" timestamp="1596892978256" />
+    <state x="535" y="6" key="CommitChangelistDialog2/0.0.1920.1040@0.0.1920.1040" timestamp="1596895552037" />
     <state x="739" y="261" key="FileChooserDialogImpl" timestamp="1596793704002">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -359,10 +368,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="468" y="165" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1596793705735" />
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1596892979560">
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1596895553209">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1596892979560" />
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1596895553209" />
     <state x="616" y="240" width="672" height="677" key="run.anything.popup" timestamp="1596895404420">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>

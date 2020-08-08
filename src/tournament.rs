@@ -39,12 +39,12 @@ impl Tournament {
 
     pub fn upgrade_generation(&mut self, mutate_prob: f64, depth: usize, rng: &mut impl Rng) {
         assert_eq!(self.cpus.len(), 4096);
-
+        self.cpus.shuffle(rng);
+    
         let mut handles = Vec::with_capacity(4096);
         let mut cpus = Vec::with_capacity(4096);
 
         for i in 0..64 {
-            self.cpus.shuffle(rng);
             let thread_cpu = self.cpus.clone();
             let mut rng = StdRng::from_seed(rng.gen());
 
