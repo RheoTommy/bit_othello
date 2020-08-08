@@ -35,6 +35,7 @@ pub enum Choice {
 }
 
 #[derive(Clone, Eq, PartialEq)]
+/// データの重さ的にはCopy
 pub struct Board {
     pub turn: usize,
     pub player: Player,
@@ -83,6 +84,7 @@ impl Debug for Board {
 }
 
 impl Board {
+    /// 初期盤面の作成
     pub fn new() -> Self {
         Self {
             turn: 1,
@@ -92,6 +94,7 @@ impl Board {
         }
     }
 
+    /// 設置可能箇所のみBitを立たせたものを返す
     pub fn make_legal_board(&self) -> BitBoard {
         let horizontal_watch_board = self.opponent_board & 0x7e7e7e7e7e7e7e7e;
         let vertical_watch_board = self.opponent_board & 0x00FFFFFFFFFFFF00;
@@ -179,21 +182,25 @@ impl Board {
         legal_board
     }
 
+    /// 座標からBitに
     fn coordinate_to_bit(co: Coordinate) -> BitBoard {
         let (i, j) = co;
         1 << (63 - i * 8 - j)
     }
 
-    pub fn is_possible(&self, put: BitBoard) -> bool {
-        (put & self.make_legal_board()) != 0
+    /// 設置可能か
+    pub fn is_possible(&self, co: Coordinate) -> bool {
+        (Board::coordinate_to_bit(co) & self.make_legal_board()) != 0
     }
 
+    /// 手番と次に打つ人と盤面を更新
     fn skip(&mut self) {
         self.turn += 1;
         self.player = self.player.next();
         swap(&mut self.opponent_board, &mut self.player_board);
     }
 
+    /// Choiceで番面を更新
     pub fn update(&mut self, choice: Choice) -> Result<JudgeResult, &'static str> {
         if let Choice::Skip = choice {
             self.skip();
@@ -217,10 +224,8 @@ impl Board {
         }
 
         self.reverse(put);
-    
-        swap(&mut self.opponent_board, &mut self.player_board);
-        self.player = self.player.next();
-        self.turn += 1;
+
+        self.skip();
 
         if self.is_game_finished() {
             let (player, opponent) = self.calc_now_score();
@@ -236,7 +241,22 @@ impl Board {
         Ok(JudgeResult::Continue)
     }
 
+    /// ひっくり返る場所を可変更新
     fn reverse(&mut self, put: BitBoard) {
+        fn transfer(put: BitBoard, k: usize) -> BitBoard {
+            match k {
+                0 => (put << 8) & 0xffffffffffffff00,
+                1 => (put << 7) & 0x7f7f7f7f7f7f7f00,
+                2 => (put >> 1) & 0x7f7f7f7f7f7f7f7f,
+                3 => (put >> 9) & 0x007f7f7f7f7f7f7f,
+                4 => (put >> 8) & 0x00ffffffffffffff,
+                5 => (put >> 7) & 0x00fefefefefefefe,
+                6 => (put << 1) & 0xfefefefefefefefe,
+                7 => (put << 9) & 0xfefefefefefefe00,
+                _ => unimplemented!(),
+            }
+        }
+
         let mut rev = 0;
         for k in 0..8 {
             let mut rev_ = 0;
@@ -256,20 +276,7 @@ impl Board {
         self.opponent_board ^= rev;
     }
 
-    fn transfer(put: BitBoard, k: usize) -> BitBoard {
-        match k {
-            0 => (put << 8) & 0xffffffffffffff00,
-            1 => (put << 7) & 0x7f7f7f7f7f7f7f00,
-            2 => (put >> 1) & 0x7f7f7f7f7f7f7f7f,
-            3 => (put >> 9) & 0x007f7f7f7f7f7f7f,
-            4 => (put >> 8) & 0x00ffffffffffffff,
-            5 => (put >> 7) & 0x00fefefefefefefe,
-            6 => (put << 1) & 0xfefefefefefefefe,
-            7 => (put << 9) & 0xfefefefefefefe00,
-            _ => unimplemented!(),
-        }
-    }
-
+    /// スキップしか手がないか
     pub fn is_skip(&self) -> bool {
         let player_legal_board = self.make_legal_board();
 
@@ -285,6 +292,7 @@ impl Board {
         player_legal_board == 0x0000000000000000 && opponent_legal_board != 0x0000000000000000
     }
 
+    /// 両方の手が存在しないか
     fn is_game_finished(&self) -> bool {
         let player_legal_board = self.make_legal_board();
 
@@ -300,6 +308,7 @@ impl Board {
         player_legal_board == 0x0000000000000000 && opponent_legal_board == 0x0000000000000000
     }
 
+    /// 現在のコマの数を(Player,Opponent)の準に返す
     pub fn calc_now_score(&self) -> (u32, u32) {
         let player_num = self.player_board.count_ones();
         let opponent_num = self.opponent_board.count_ones();
