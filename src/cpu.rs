@@ -16,7 +16,8 @@ pub struct CPU {
 impl CPU {
     pub fn log(&self, log_file: &mut File) -> std::io::Result<()> {
         let str = serde_json::to_string(self)?;
-        log_file.write_all(format!("\n{}", str).as_bytes())
+        log_file.write_all(format!("\n{}", str).as_bytes())?;
+        log_file.flush()
     }
 
     pub fn from_log_file(log_file: &mut File) -> std::io::Result<Self> {

@@ -26,7 +26,8 @@ impl Tournament {
     pub fn log(&self, log_file: &mut File) -> std::io::Result<()> {
         let str = serde_json::to_string(self)?;
         log_file.set_len(0)?;
-        log_file.write_all(str.as_bytes())
+        log_file.write_all(str.as_bytes())?;
+        log_file.flush()
     }
 
     pub fn from_log_file(log_file: &mut File) -> std::io::Result<Self> {
@@ -53,9 +54,7 @@ impl Tournament {
                 for _ in 0..len / 128 {
                     let mut iter = self_cpus.choose_multiple(&mut rng, selection_size);
                     let first = iter.next().unwrap();
-                    cpus.push(iter.fold(first.clone(), |a, b| {
-                        eval_cpu(&a, &b, depth).0.clone()
-                    }))
+                    cpus.push(iter.fold(first.clone(), |a, b| eval_cpu(&a, &b, depth).0.clone()))
                 }
 
                 cpus
